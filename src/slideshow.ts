@@ -12,11 +12,13 @@ export class Slideshow {
   private currentIndex: number = 0;
   private isPaused: boolean = false;
   private timer: number | null = null;
+  private videoProgressRAF: number | null = null;
 
   private imageEl: HTMLImageElement;
   private videoEl: HTMLVideoElement;
   private loadingEl: HTMLElement;
   private playPauseBtn: HTMLButtonElement;
+  private progressFill: HTMLElement;
 
   private onEnd?: () => void;
   private onFileChange?: (filename: string) => void;
@@ -29,6 +31,7 @@ export class Slideshow {
       video: HTMLVideoElement;
       loading: HTMLElement;
       playPauseBtn: HTMLButtonElement;
+      progressFill: HTMLElement;
     },
     callbacks?: {
       onEnd?: () => void;
@@ -41,6 +44,7 @@ export class Slideshow {
     this.videoEl = elements.video;
     this.loadingEl = elements.loading;
     this.playPauseBtn = elements.playPauseBtn;
+    this.progressFill = elements.progressFill;
     this.onEnd = callbacks?.onEnd;
     this.onFileChange = callbacks?.onFileChange;
 
@@ -84,6 +88,7 @@ export class Slideshow {
     this.videoEl.src = "";
 
     this.imageEl.classList.add("fade-out");
+    this.resetProgress();
 
     await new Promise((r) => setTimeout(r, 150));
 
@@ -95,6 +100,7 @@ export class Slideshow {
 
     if (!this.isPaused) {
       this.startTimer();
+      this.startProgressAnimation();
     }
   }
 
@@ -103,6 +109,7 @@ export class Slideshow {
     this.imageEl.src = "";
 
     this.videoEl.classList.add("fade-out");
+    this.resetProgress();
 
     await new Promise((r) => setTimeout(r, 150));
 
@@ -114,12 +121,63 @@ export class Slideshow {
 
     if (!this.isPaused) {
       this.videoEl.play().catch(console.error);
+      this.startVideoProgressLoop();
     }
   }
 
   private onVideoEnded() {
     if (!this.isPaused) {
       this.next();
+    }
+  }
+
+  private startVideoProgressLoop() {
+    this.stopVideoProgressLoop();
+
+    const updateProgress = () => {
+      if (this.videoEl.duration && !isNaN(this.videoEl.duration)) {
+        const progress = (this.videoEl.currentTime / this.videoEl.duration) * 100;
+        this.progressFill.style.width = `${progress}%`;
+      }
+
+      if (!this.isPaused && !this.videoEl.paused) {
+        this.videoProgressRAF = requestAnimationFrame(updateProgress);
+      }
+    };
+
+    this.videoProgressRAF = requestAnimationFrame(updateProgress);
+  }
+
+  private stopVideoProgressLoop() {
+    if (this.videoProgressRAF !== null) {
+      cancelAnimationFrame(this.videoProgressRAF);
+      this.videoProgressRAF = null;
+    }
+  }
+
+  private resetProgress() {
+    this.stopVideoProgressLoop();
+    this.progressFill.classList.remove("animate", "paused");
+    this.progressFill.style.width = "0%";
+  }
+
+  private startProgressAnimation() {
+    this.progressFill.style.setProperty("--progress-duration", `${this.config.duration}s`);
+    this.progressFill.classList.remove("paused");
+    this.progressFill.classList.add("animate");
+  }
+
+  private pauseProgress() {
+    const currentFile = this.files[this.currentIndex];
+    if (currentFile?.type === "image") {
+      this.progressFill.classList.add("paused");
+    }
+  }
+
+  private resumeProgress() {
+    const currentFile = this.files[this.currentIndex];
+    if (currentFile?.type === "image") {
+      this.progressFill.classList.remove("paused");
     }
   }
 
@@ -172,14 +230,18 @@ export class Slideshow {
 
     if (this.isPaused) {
       this.clearTimer();
+      this.pauseProgress();
       if (currentFile?.type === "video") {
         this.videoEl.pause();
+        this.stopVideoProgressLoop();
       }
     } else {
       if (currentFile?.type === "image") {
         this.startTimer();
+        this.resumeProgress();
       } else if (currentFile?.type === "video") {
         this.videoEl.play().catch(console.error);
+        this.startVideoProgressLoop();
       }
     }
   }
@@ -190,6 +252,7 @@ export class Slideshow {
 
   destroy() {
     this.clearTimer();
+    this.stopVideoProgressLoop();
     this.videoEl.pause();
     this.videoEl.src = "";
     this.imageEl.src = "";

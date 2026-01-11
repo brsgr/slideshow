@@ -15,6 +15,7 @@ const videoEl = document.getElementById("slide-video") as HTMLVideoElement;
 const controlsEl = document.getElementById("controls")!;
 const loadingEl = document.getElementById("loading")!;
 const filenameEl = document.getElementById("filename")!;
+const progressFill = document.getElementById("progress-fill")!;
 
 const prevBtn = document.getElementById("prev") as HTMLButtonElement;
 const playPauseBtn = document.getElementById("play-pause") as HTMLButtonElement;
@@ -76,6 +77,7 @@ async function startSlideshow(files: MediaFile[], config: SlideshowConfig) {
       video: videoEl,
       loading: loadingEl,
       playPauseBtn: playPauseBtn,
+      progressFill: progressFill,
     },
     {
       onEnd: () => exitSlideshow(),
