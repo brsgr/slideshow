@@ -9,22 +9,63 @@
   <body>
     <div id="app">
       <div id="start-screen">
-        <h1>Slideshow</h1>
-        <div class="settings">
-          <label>
-            Image duration (seconds):
-            <input type="number" id="duration" value="5" min="1" max="60" />
-          </label>
-          <label>
-            <input type="checkbox" id="shuffle" />
-            Shuffle order
-          </label>
-          <label>
-            <input type="checkbox" id="loop" checked />
-            Loop slideshow
-          </label>
+        <!-- Left Panel: Content -->
+        <div class="content-panel">
+          <div class="brand">
+            <h1>Slideshow</h1>
+            <p>Local media presentation</p>
+          </div>
+
+          <div class="settings">
+            <div class="settings-header">Configuration</div>
+
+            <div class="setting-row">
+              <span class="setting-label">Image duration</span>
+              <div class="setting-control">
+                <input type="number" id="duration" value="5" min="1" max="60" />
+                <span class="unit-label">seconds</span>
+              </div>
+            </div>
+
+            <div class="setting-row">
+              <span class="setting-label">Shuffle order</span>
+              <label class="toggle">
+                <input type="checkbox" id="shuffle" />
+                <div class="toggle-track">
+                  <div class="toggle-thumb"></div>
+                </div>
+              </label>
+            </div>
+
+            <div class="setting-row">
+              <span class="setting-label">Loop slideshow</span>
+              <label class="toggle">
+                <input type="checkbox" id="loop" checked />
+                <div class="toggle-track">
+                  <div class="toggle-thumb"></div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <button id="select-folder">
+            <span>Select Folder</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
         </div>
-        <button id="select-folder">Select Folder</button>
+
+        <!-- Right Panel: Visual -->
+        <div class="visual-panel">
+          <div class="frame-container">
+            <div class="floating-frame frame-1"></div>
+            <div class="floating-frame frame-2"></div>
+            <div class="floating-frame frame-3"></div>
+            <div class="floating-frame frame-4"></div>
+            <div class="floating-frame frame-5"></div>
+          </div>
+        </div>
       </div>
 
       <div id="slideshow" class="hidden">
