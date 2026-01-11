@@ -19,6 +19,7 @@ export class Slideshow {
   private playPauseBtn: HTMLButtonElement;
 
   private onEnd?: () => void;
+  private onFileChange?: (filename: string) => void;
 
   constructor(
     files: MediaFile[],
@@ -29,7 +30,10 @@ export class Slideshow {
       loading: HTMLElement;
       playPauseBtn: HTMLButtonElement;
     },
-    onEnd?: () => void
+    callbacks?: {
+      onEnd?: () => void;
+      onFileChange?: (filename: string) => void;
+    }
   ) {
     this.files = files;
     this.config = config;
@@ -37,7 +41,8 @@ export class Slideshow {
     this.videoEl = elements.video;
     this.loadingEl = elements.loading;
     this.playPauseBtn = elements.playPauseBtn;
-    this.onEnd = onEnd;
+    this.onEnd = callbacks?.onEnd;
+    this.onFileChange = callbacks?.onFileChange;
 
     this.videoEl.addEventListener("ended", () => this.onVideoEnded());
   }
@@ -53,6 +58,7 @@ export class Slideshow {
 
     this.clearTimer();
     this.showLoading(true);
+    this.onFileChange?.(file.name);
 
     try {
       const url = await loadMediaUrl(file);

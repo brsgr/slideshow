@@ -1,4 +1,5 @@
 import heic2any from "heic2any";
+import UTIF from "utif";
 
 export interface MediaFile {
   name: string;
@@ -35,6 +36,11 @@ function isVideo(filename: string): boolean {
 
 function isHeic(filename: string): boolean {
   return getExtension(filename) === "heic";
+}
+
+function isTiff(filename: string): boolean {
+  const ext = getExtension(filename);
+  return ext === "tiff" || ext === "tif";
 }
 
 export async function scanDirectory(
@@ -96,6 +102,33 @@ export async function loadMediaUrl(file: MediaFile): Promise<string> {
       blob = Array.isArray(converted) ? converted[0] : converted;
     } catch (err) {
       console.error(`Failed to convert HEIC file ${file.name}:`, err);
+      throw err;
+    }
+  } else if (isTiff(file.name)) {
+    try {
+      const arrayBuffer = await fileData.arrayBuffer();
+      const ifds = UTIF.decode(arrayBuffer);
+      UTIF.decodeImage(arrayBuffer, ifds[0]);
+      const rgba = UTIF.toRGBA8(ifds[0]);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = ifds[0].width;
+      canvas.height = ifds[0].height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Could not get canvas context");
+
+      const imageData = ctx.createImageData(canvas.width, canvas.height);
+      imageData.data.set(rgba);
+      ctx.putImageData(imageData, 0, 0);
+
+      blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((b) => {
+          if (b) resolve(b);
+          else reject(new Error("Failed to create blob from canvas"));
+        }, "image/png");
+      });
+    } catch (err) {
+      console.error(`Failed to convert TIFF file ${file.name}:`, err);
       throw err;
     }
   }

@@ -14,6 +14,7 @@ const imageEl = document.getElementById("slide-image") as HTMLImageElement;
 const videoEl = document.getElementById("slide-video") as HTMLVideoElement;
 const controlsEl = document.getElementById("controls")!;
 const loadingEl = document.getElementById("loading")!;
+const filenameEl = document.getElementById("filename")!;
 
 const prevBtn = document.getElementById("prev") as HTMLButtonElement;
 const playPauseBtn = document.getElementById("play-pause") as HTMLButtonElement;
@@ -76,7 +77,12 @@ async function startSlideshow(files: MediaFile[], config: SlideshowConfig) {
       loading: loadingEl,
       playPauseBtn: playPauseBtn,
     },
-    () => exitSlideshow()
+    {
+      onEnd: () => exitSlideshow(),
+      onFileChange: (filename: string) => {
+        filenameEl.textContent = filename;
+      },
+    }
   );
 
   await slideshow.start();
@@ -98,6 +104,7 @@ function exitSlideshow() {
   imageEl.classList.add("hidden");
   videoEl.classList.add("hidden");
   controlsEl.classList.add("hidden");
+  filenameEl.textContent = "";
 }
 
 function setupControls() {
