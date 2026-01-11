@@ -38,7 +38,7 @@ npm run preview
 2. Push to GitHub
 3. Go to repo **Settings > Pages**
 4. Set source to **GitHub Actions**
-5. Push to `master` triggers auto-deploy
+5. Push to `main` triggers auto-deploy
 
 ## Browser Support
 
