@@ -32,6 +32,14 @@ Output in `dist/`. Preview the build with:
 npm run preview
 ```
 
+## Deploy to GitHub Pages
+
+1. Update `base` in `vite.config.ts` to match your repo name
+2. Push to GitHub
+3. Go to repo **Settings > Pages**
+4. Set source to **GitHub Actions**
+5. Push to `master` triggers auto-deploy
+
 ## Browser Support
 
 Requires File System Access API (Chrome/Edge only).
