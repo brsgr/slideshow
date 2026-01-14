@@ -1,4 +1,4 @@
-import { MediaFile, loadMediaUrl, preloadMedia } from "./media-loader";
+import { MediaFile, loadMediaUrl, preloadMedia, clearBlobCache } from "./media-loader";
 
 export interface SlideshowConfig {
   duration: number;
@@ -256,5 +256,6 @@ export class Slideshow {
     this.videoEl.pause();
     this.videoEl.src = "";
     this.imageEl.src = "";
+    clearBlobCache();
   }
 }

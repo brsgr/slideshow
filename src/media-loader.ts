@@ -8,6 +8,61 @@ export interface MediaFile {
   blobUrl?: string;
 }
 
+interface LRUCacheEntry {
+  url: string;
+  file: MediaFile;
+}
+
+class BlobUrlLRUCache {
+  private cache = new Map<string, LRUCacheEntry>();
+  private maxSize: number;
+
+  constructor(maxSize: number = 10) {
+    this.maxSize = maxSize;
+  }
+
+  get(key: string): string | undefined {
+    const entry = this.cache.get(key);
+    if (entry) {
+      // Move to end (most recently used)
+      this.cache.delete(key);
+      this.cache.set(key, entry);
+      return entry.url;
+    }
+    return undefined;
+  }
+
+  set(key: string, url: string, file: MediaFile): void {
+    if (this.cache.has(key)) {
+      this.cache.delete(key);
+    }
+
+    while (this.cache.size >= this.maxSize) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey !== undefined) {
+        this.evict(oldestKey);
+      }
+    }
+
+    this.cache.set(key, { url, file });
+  }
+
+  private evict(key: string): void {
+    const entry = this.cache.get(key);
+    if (entry) {
+      URL.revokeObjectURL(entry.url);
+      entry.file.blobUrl = undefined;
+      this.cache.delete(key);
+    }
+  }
+
+  clear(): void {
+    for (const key of this.cache.keys()) {
+      this.evict(key);
+    }
+  }
+}
+
 const IMAGE_EXTENSIONS = new Set([
   "jpg",
   "jpeg",
@@ -76,10 +131,11 @@ export function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-const blobUrlCache = new Map<string, string>();
+const blobUrlCache = new BlobUrlLRUCache(10);
 
 export async function loadMediaUrl(file: MediaFile): Promise<string> {
   if (file.blobUrl) {
+    blobUrlCache.get(file.name); // Touch to update recency
     return file.blobUrl;
   }
 
@@ -135,7 +191,7 @@ export async function loadMediaUrl(file: MediaFile): Promise<string> {
 
   const url = URL.createObjectURL(blob);
   file.blobUrl = url;
-  blobUrlCache.set(file.name, url);
+  blobUrlCache.set(file.name, url, file);
   return url;
 }
 
@@ -160,4 +216,8 @@ export async function preloadMedia(
       )
     )
   );
+}
+
+export function clearBlobCache(): void {
+  blobUrlCache.clear();
 }
