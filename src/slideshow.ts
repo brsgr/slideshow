@@ -13,6 +13,7 @@ export class Slideshow {
   private isPaused: boolean = false;
   private timer: number | null = null;
   private videoProgressRAF: number | null = null;
+  private wakeLock: WakeLockSentinel | null = null;
 
   private imageEl: HTMLImageElement;
   private videoEl: HTMLVideoElement;
@@ -51,8 +52,33 @@ export class Slideshow {
     this.videoEl.addEventListener("ended", () => this.onVideoEnded());
   }
 
+  private async requestWakeLock(): Promise<void> {
+    if ('wakeLock' in navigator) {
+      try {
+        this.wakeLock = await navigator.wakeLock.request('screen');
+      } catch (err) {
+        console.warn('Wake lock request failed:', err);
+      }
+    }
+  }
+
+  private async releaseWakeLock(): Promise<void> {
+    if (this.wakeLock) {
+      await this.wakeLock.release();
+      this.wakeLock = null;
+    }
+  }
+
+  private handleVisibilityChange = async (): Promise<void> => {
+    if (document.visibilityState === 'visible' && !this.isPaused) {
+      await this.requestWakeLock();
+    }
+  };
+
   async start() {
     this.currentIndex = 0;
+    await this.requestWakeLock();
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
     await this.showCurrent();
   }
 
@@ -257,5 +283,7 @@ export class Slideshow {
     this.videoEl.src = "";
     this.imageEl.src = "";
     clearBlobCache();
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+    this.releaseWakeLock();
   }
 }
